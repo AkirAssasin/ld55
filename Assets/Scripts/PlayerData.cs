@@ -8,7 +8,7 @@ public class PlayerData
 
     //golems
     public List<GolemData> m_golems = new List<GolemData>();
-    int m_maxGolemSlots = 10;
+    public int m_maxGolemSlots { get; private set; } = 10;
 
     public PlayerData()
     {

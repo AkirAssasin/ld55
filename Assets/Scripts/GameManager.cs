@@ -29,6 +29,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject m_golemInspectUIParent;
     [SerializeField] GolemInfoPanelController m_golemInspectPanel;
 
+    [Header("Golem Slots UI")]
+    [SerializeField] GameObject m_golemSlotPrefab;
+    [SerializeField] RectTransform m_golemSlotParent;
+
+    readonly List<GolemSlotController> m_golemSlots = new List<GolemSlotController>();
     GameState m_currentGameState = GameState.Count;
     PlayerData m_player;
 
@@ -88,6 +93,7 @@ public class GameManager : MonoBehaviour
         m_golemInspectUIParent.SetActive(false);
         m_summoningUIParent.SetActive(false);
 
+        RebuildGolemSlots();
         ChangeGameState(GameState.MainLobby);
     }
 
@@ -127,6 +133,7 @@ public class GameManager : MonoBehaviour
     public void OnSummonCompleted() //button to complete summoning
     {
         GolemData golem = m_materialList.SummonGolem(m_player);
+        ReassignGolemSlots();
         ChangeGameState(GameState.MainLobby);
         OpenGolemInspectUI(golem);
     }
@@ -143,5 +150,42 @@ public class GameManager : MonoBehaviour
     {
         m_golemInspectPanel.Initialize(golem, false);
         m_golemInspectUIParent.SetActive(true);
+    }
+
+    void OnGolemSlotClicked(int index)
+    {
+        if (index < m_player.m_golems.Count)
+        {
+            OpenGolemInspectUI(m_player.m_golems[index]);
+        }
+    }
+
+    void RebuildGolemSlots()
+    {
+        for (int X = 0; X < m_golemSlots.Count; ++X)
+            m_golemSlots[X].Pool();
+        m_golemSlots.Clear();
+        
+        for (int X = 0; X < m_player.m_maxGolemSlots; ++X)
+        {
+            int index = X;
+            GolemSlotController golemSlot = GolemSlotController.GetFromPool(m_golemSlotPrefab);
+            golemSlot.Initialize(m_golemSlotParent, () => OnGolemSlotClicked(index));
+            m_golemSlots.Add(golemSlot);
+        }
+        ReassignGolemSlots();
+    }
+
+    void ReassignGolemSlots()
+    {
+        for (int X = 0; X < m_golemSlots.Count; ++X)
+        {
+            GolemData golem = null;
+            if (X < m_player.m_golems.Count)
+            {
+                golem = m_player.m_golems[X];
+            }
+            m_golemSlots[X].SetGolemData(golem);
+        }
     }
 }

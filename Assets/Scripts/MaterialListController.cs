@@ -69,6 +69,8 @@ public class MaterialListController : MonoBehaviour
         {
             m_listItems[X].RemoveFromPlayerInventory(player);
         }
-        return m_golemBuilder.SummonGolem(m_builderPanel.GetInputFieldName());
+        GolemData golem = m_golemBuilder.SummonGolem(m_builderPanel.GetInputFieldName());
+        player.m_golems.Add(golem);
+        return golem;
     }
 }
