@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,6 +5,10 @@ public class PlayerData
 {
     //material ID to count
     public Dictionary<int, int> m_inventory = new Dictionary<int, int>();
+
+    //golems
+    public List<GolemData> m_golems = new List<GolemData>();
+    int m_maxGolemSlots = 10;
 
     public PlayerData()
     {
@@ -22,12 +25,14 @@ public class PlayerData
         m_inventory[materialID] = count;
     }
 
-    public void RemoveFromInventory(int materialID, int count)
+    public int RemoveFromInventory(int materialID, int count)
     {
         int remaining = (m_inventory[materialID] -= count);
         if (remaining <= 0)
         {
+            remaining = 0;
             m_inventory.Remove(materialID);
         }
+        return remaining;
     }
 }

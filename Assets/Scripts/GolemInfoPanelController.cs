@@ -56,9 +56,25 @@ public class GolemInfoPanelController : MonoBehaviour
             //add stats info
             AddStatListItem(statType, golem.GetStatString(statType));
         }
+
+        //add element info
+        GolemListItemController listItem = GolemListItemController.GetFromPool(m_listItemPrefab);
+        listItem.Initialize(m_statsListTransform, "Element", null, golem.m_elementType.m_icon, golem.m_elementType.m_color);
+        StatsListItems.Add(listItem);
+
         m_nameInputFieldObject.SetActive(false);
         m_nameTextMesh.text = golem.m_name;
         m_nameTextMesh.enabled = true;
+    }
+
+    public string GetInputFieldName()
+    {
+        string name = m_nameInputField.text.Trim();
+        if (string.IsNullOrEmpty(name))
+        {
+            name = GolemData.GetRandomName();
+        }
+        return name;
     }
 
     void AddStatListItem(GolemStatType statType, string value)

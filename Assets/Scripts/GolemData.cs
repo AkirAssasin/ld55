@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -41,6 +40,7 @@ public class GolemBuilder
     public void CalculateSkillChance()
     {
         m_skillChance.Clear();
+        m_skillChance.Add(100);
         float[] sortedMaxStats = m_maxStats.OrderBy(s => s).ToArray();
         for (int X = 1; X < sortedMaxStats.Length; ++X)
         {
@@ -54,7 +54,10 @@ public class GolemBuilder
 
     public GolemData SummonGolem(string name)
     {
-        GolemData golemData = new GolemData(name);
+        //create golem with random weakness
+        GolemData golemData = new(name, GameManager.GetRandomElement());
+
+        //generate stats
         for (int X = 0; X < (int)GolemStatType.Count; ++X)
         {
             int minStatInt = (int)m_minStats[X], maxStatInt = (int)m_maxStats[X];
@@ -72,14 +75,29 @@ public class GolemBuilder
 
 public class GolemData
 {
+    static readonly string[] s_namePool = new[]
+    {
+        "Ava", "Bella", "Charlotte", "Daisy", "Emma", "Fiona", "Grace", "Hannah", "Isabella",
+        "Jasmine", "Katherine", "Lily", "Mia", "Natalie", "Olivia", "Penelope", "Quinn", "Rachel",
+        "Sophia", "Taylor", "Ursula", "Victoria", "Willow", "Ximena", "Yara", "Zoe"
+    };
+
+    public static string GetRandomName()
+    {
+        return s_namePool[Random.Range(0, s_namePool.Length)];
+    }
+
     public const int StatMax = 100;
 
     public readonly string m_name;
     public readonly int[] m_stats = new int[(int)GolemStatType.Count];
 
-    public GolemData(string name)
+    public readonly ElementTypeData m_elementType;
+
+    public GolemData(string name, ElementTypeData elementType)
     {
         m_name = name;
+        m_elementType = elementType;
     }
 
     public static string GetStatLabel(GolemStatType statType)

@@ -1146,3 +1146,5 @@ MonoBehaviour:
   m_listItemPrefab: {fileID: 3203329408198225321, guid: 20532dd07f3883d41a6210e4af84ae84, type: 3}
   m_statsListTransform: {fileID: 5238114917589340923}
   m_skillsListTransform: {fileID: 2416403900045681040}
+  m_nameTextMesh: {fileID: 7763558564786668624}
+  m_nameInputFieldObject: {fileID: 2822803222168133032}

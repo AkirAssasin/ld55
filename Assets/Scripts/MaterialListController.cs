@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MaterialListController : MonoBehaviour
 {
     [SerializeField] GameObject m_listItemPrefab;
     [SerializeField] RectTransform m_contentTransform;
     [SerializeField] GolemInfoPanelController m_builderPanel;
+    [SerializeField] Button m_summonButton;
 
     readonly List<MaterialListItemController> m_listItems = new List<MaterialListItemController>();
 
@@ -31,11 +33,17 @@ public class MaterialListController : MonoBehaviour
     void Recalculate()
     {
         m_golemBuilder.Reset();
+        bool canSummon = false;
         foreach (var listItem in m_listItems.OrderBy(MaterialListItemController.GetPriorityInGolemBuilding))
         {
             MaterialData material = listItem.GetSelectionData(out int selectedCount);
-            m_golemBuilder.AddMaterial(material, selectedCount);
+            if (selectedCount > 0)
+            {
+                canSummon = true;
+                m_golemBuilder.AddMaterial(material, selectedCount);
+            }
         }
+        m_summonButton.interactable = canSummon;
         m_golemBuilder.CalculateSkillChance();
         m_builderPanel.Initialize(m_golemBuilder);
     }
@@ -52,5 +60,14 @@ public class MaterialListController : MonoBehaviour
     public MaterialListItemController GetItem(int index)
     {
         return m_listItems[index];
+    }
+
+    public GolemData SummonGolem(PlayerData player)
+    {
+        for (int X = 0; X < m_listItems.Count; ++X)
+        {
+            m_listItems[X].RemoveFromPlayerInventory(player);
+        }
+        return m_golemBuilder.SummonGolem(m_builderPanel.GetInputFieldName());
     }
 }

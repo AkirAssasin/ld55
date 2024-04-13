@@ -29,9 +29,8 @@ public class MaterialListItemController : PoolableObject<MaterialListItemControl
         m_nameTextMesh.text = materialData.name;
         m_nameTextMesh.color = materialData.m_rarity.m_color;
 
-        m_maxCount = maxCount;
-        m_countTextMesh.text = m_maxCount.ToString();
-        SetSelectedCount(m_selectedCount);
+        m_selectedCount = 0;
+        SetMaxCount(maxCount);
     }
 
     new public void Pool()
@@ -41,6 +40,13 @@ public class MaterialListItemController : PoolableObject<MaterialListItemControl
             m_rectTransform.SetParent(null, false);
             m_onChangedByUI = null;
         }
+    }
+
+    void SetMaxCount(int maxCount)
+    {
+        m_maxCount = maxCount;
+        m_countTextMesh.text = m_maxCount.ToString();
+        SetSelectedCount(m_selectedCount);
     }
 
     void SetSelectedCount(int selectedCount)
@@ -63,6 +69,12 @@ public class MaterialListItemController : PoolableObject<MaterialListItemControl
     }
 
     public void SelectAll() => SetSelectedCount(m_maxCount);
+
+    public void RemoveFromPlayerInventory(PlayerData player)
+    {
+        int remaining = player.RemoveFromInventory(m_materialID, m_selectedCount);
+        SetMaxCount(remaining);
+    }
 
     public void OnClicked()
     {
