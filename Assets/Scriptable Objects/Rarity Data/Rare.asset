@@ -16,3 +16,4 @@ MonoBehaviour:
   m_minValueIncrease: 1
   m_maxValueIncrease: 1.5
   m_effectivenessCutoff: 75
+  m_expeditionWeight: 4

@@ -7,4 +7,6 @@ public class MaterialRarityData : ScriptableObject
     public float m_minValueIncrease;
     public float m_maxValueIncrease;
     public int m_effectivenessCutoff;
+
+    public int m_expeditionWeight;
 }

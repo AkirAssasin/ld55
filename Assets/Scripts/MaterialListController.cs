@@ -63,7 +63,7 @@ public class MaterialListController : MonoBehaviour
         return m_listItems[index];
     }
 
-    public GolemData SummonGolem(PlayerData player)
+    public int SummonGolem(PlayerData player)
     {
         for (int X = 0; X < m_listItems.Count; ++X)
         {
@@ -71,6 +71,6 @@ public class MaterialListController : MonoBehaviour
         }
         GolemData golem = m_golemBuilder.SummonGolem(m_builderPanel.GetInputFieldName());
         player.m_golems.Add(golem);
-        return golem;
+        return player.m_golems.Count - 1;
     }
 }

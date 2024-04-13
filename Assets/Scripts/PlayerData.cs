@@ -13,10 +13,7 @@ public class PlayerData
     public PlayerData()
     {
         //temp
-        for (int X = 0; X < 10; ++X)
-        {
-            AddIntoInventory(Random.Range(0, GameManager.GetMaterialCount()), 2);
-        }
+        AddIntoInventory(0, 1);
     }
 
     public void AddIntoInventory(int materialID, int count)

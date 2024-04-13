@@ -63,6 +63,7 @@ public class GolemBuilder
             int minStatInt = (int)m_minStats[X], maxStatInt = (int)m_maxStats[X];
             golemData.m_stats[X] = Random.Range(minStatInt, maxStatInt + 1);
         }
+        golemData.m_health = golemData.GetMaxHealth();
 
         //generate skills
         GameManager.GetRandomSkills(m_skillChance, golemData.m_skills);
@@ -99,6 +100,8 @@ public class GolemData
 
     public readonly List<BaseSkillData> m_skills = new List<BaseSkillData>();
 
+    public int m_health;
+
     public GolemData(string name, ElementTypeData elementType)
     {
         m_name = name;
@@ -110,8 +113,19 @@ public class GolemData
         return statType.ToString();
     }
 
+    public int GetMaxHealth()
+    {
+        return (1 + m_stats[(int)GolemStatType.Vitality]) * 10;
+    }
+
     public string GetStatString(GolemStatType statType)
     {
+        if (statType == GolemStatType.Vitality)
+        {
+            return $"{m_health} / {GetMaxHealth()}";
+        }
         return m_stats[(int)statType].ToString();
     }
+
+    public bool CanBeCrowned() => false;
 }
