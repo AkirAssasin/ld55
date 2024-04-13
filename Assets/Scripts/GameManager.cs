@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +17,8 @@ public class GameManager : MonoBehaviour
     [Header("Game Data")]
     [SerializeField] MaterialData[] m_materialDatas;
     [SerializeField] ElementTypeData[] m_elementTypeDatas;
+    [SerializeField] BaseSkillData[] m_guaranteedSkillDatas;
+    [SerializeField] BaseSkillData[] m_skillDatas;
 
     [Header("Summoning UI")]
     [SerializeField] Button m_summonButton;
@@ -33,6 +36,8 @@ public class GameManager : MonoBehaviour
     {
         Instance = this;
     }
+
+    #region Static Game Data Stuff
 
     public static MaterialData GetMaterialData(int id)
     {
@@ -53,6 +58,28 @@ public class GameManager : MonoBehaviour
     {
         return Instance.m_elementTypeDatas[Random.Range(0, Instance.m_elementTypeDatas.Length)];
     }
+
+    public static void GetRandomSkills(List<int> skillChance, List<BaseSkillData> skills)
+    {
+        List<BaseSkillData> skillPool = new List<BaseSkillData>(Instance.m_guaranteedSkillDatas);
+        for (int X = 0; X < skillChance.Count; ++X)
+        {
+            if (Random.Range(0, 100) >= skillChance[X])
+            {
+                //failed the roll
+                continue;
+            }
+
+            int skillIndex = Random.Range(0, skillPool.Count);
+            skills.Add(skillPool[skillIndex]);
+            skillPool.RemoveAt(skillIndex);
+            
+            //guaranteed skill taken; fill with remaining
+            if (X == 0) skillPool.AddRange(Instance.m_skillDatas);
+        }
+    }
+
+    #endregion
 
     void Start()
     {
@@ -114,7 +141,7 @@ public class GameManager : MonoBehaviour
 
     public void OpenGolemInspectUI(GolemData golem)
     {
-        m_golemInspectPanel.Initialize(golem);
+        m_golemInspectPanel.Initialize(golem, false);
         m_golemInspectUIParent.SetActive(true);
     }
 }

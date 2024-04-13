@@ -48,13 +48,18 @@ public class GolemInfoPanelController : MonoBehaviour
         m_nameTextMesh.enabled = false;
     }
 
-    public void Initialize(GolemData golem)
+    public void Initialize(GolemData golem, bool addCallbacks)
     {
         ResetAll();
         for (GolemStatType statType = 0; statType < GolemStatType.Count; ++statType)
         {
             //add stats info
             AddStatListItem(statType, golem.GetStatString(statType));
+        }
+        for  (int X = 0; X < golem.m_skills.Count; ++X)
+        {
+            //add skill info
+            AddSkillListItem(null, null, golem.m_skills[X], addCallbacks);
         }
 
         //add element info
@@ -79,7 +84,11 @@ public class GolemInfoPanelController : MonoBehaviour
 
     public void ResetInputFields()
     {
-        m_nameInputField.text = string.Empty;
+        if (m_nameInputField != null)
+        {
+            //can be null because of uncertain start call
+            m_nameInputField.text = string.Empty;
+        }
     }
 
     void AddStatListItem(GolemStatType statType, string value)
@@ -89,14 +98,23 @@ public class GolemInfoPanelController : MonoBehaviour
         StatsListItems.Add(listItem);
     }
 
-    void AddSkillListItem(string label, string value, Sprite icon, Color? color = null, bool addCallback = false)
+    void AddSkillListItem(string label, string value, BaseSkillData skill, bool addCallback = false)
     {
         GolemListItemController listItem = GolemListItemController.GetFromPool(m_listItemPrefab);
         Action callback = null;
-        if (addCallback)
+        Sprite icon = null;
+        Color? color = null;
+        if (skill != null)
         {
-            int index = SkillsListItems.Count;
-            callback = () => OnSkillPressed(index);
+            //replace with skill info
+            icon = skill.GetIcon(out color);
+            if (addCallback)
+            {
+                int index = SkillsListItems.Count;
+                callback = () => OnSkillPressed(index);
+            }
+            label = skill.name;
+            value = null;
         }
         listItem.Initialize(m_skillsListTransform, label, value, icon, color, callback);
         SkillsListItems.Add(listItem);

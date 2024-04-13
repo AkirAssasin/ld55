@@ -63,6 +63,9 @@ public class GolemBuilder
             int minStatInt = (int)m_minStats[X], maxStatInt = (int)m_maxStats[X];
             golemData.m_stats[X] = Random.Range(minStatInt, maxStatInt + 1);
         }
+
+        //generate skills
+        GameManager.GetRandomSkills(m_skillChance, golemData.m_skills);
         return golemData;
     }
 
@@ -93,6 +96,8 @@ public class GolemData
     public readonly int[] m_stats = new int[(int)GolemStatType.Count];
 
     public readonly ElementTypeData m_elementType;
+
+    public readonly List<BaseSkillData> m_skills = new List<BaseSkillData>();
 
     public GolemData(string name, ElementTypeData elementType)
     {
