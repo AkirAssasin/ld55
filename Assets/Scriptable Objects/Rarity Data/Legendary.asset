@@ -9,8 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 657c265bc4345df4287dc719005b3061, type: 3}
-  m_Name: Test Material B
+  m_Script: {fileID: 11500000, guid: 3fe8c0165600603469f81e0120b48eb3, type: 3}
+  m_Name: Legendary
   m_EditorClassIdentifier: 
-  m_rarity: 1
-  m_type: 0
+  m_color: {r: 1, g: 0.92529416, b: 0.5019608, a: 1}
+  m_minValueIncrease: 1.5
+  m_maxValueIncrease: 2
+  m_effectivenessCutoff: 100

@@ -8,7 +8,6 @@ public class GameManager : MonoBehaviour
 
     [Header("Game Data")]
     [SerializeField] MaterialData[] m_materialDatas;
-    [SerializeField] Color[] m_rarityColors;
 
     [Header("Summoning UI")]
     [SerializeField] MaterialListController m_materialList;
@@ -18,11 +17,6 @@ public class GameManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
-    }
-
-    public static Color GetRarityColor(int rarity)
-    {
-        return Instance.m_rarityColors[rarity];
     }
 
     public static MaterialData GetMaterialData(int id)

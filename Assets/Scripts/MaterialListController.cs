@@ -1,50 +1,52 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class MaterialListController : MonoBehaviour
 {
     [SerializeField] GameObject m_listItemPrefab;
     [SerializeField] RectTransform m_contentTransform;
+    [SerializeField] GolemInfoPanelController m_builderPanel;
 
     readonly List<MaterialListItemController> m_listItems = new List<MaterialListItemController>();
-    int m_listItemsInUse = 0;
-    public int Count => m_listItemsInUse;
+
+    GolemBuilder m_golemBuilder = new GolemBuilder();
 
     public void Initialize(PlayerData playerData)
     {
-        Resize(playerData.m_inventory.Count);
-        int index = 0;
+        for (int X = 0; X < m_listItems.Count; ++X)
+        {
+            m_listItems[X].Pool();
+        }
+        m_listItems.Clear();
         foreach (var (materialID, count) in playerData.m_inventory)
         {
-            MaterialListItemController listItem = m_listItems[index++];
-            listItem.Initialize(materialID, count);
-        }
-    }
-
-    void Resize(int newSize)
-    {
-        while (m_listItems.Count <= newSize)
-        {
-            MaterialListItemController listItem = Instantiate(m_listItemPrefab).GetComponent<MaterialListItemController>();
+            MaterialListItemController listItem = MaterialListItemController.GetFromPool(m_listItemPrefab);
+            listItem.Initialize(m_contentTransform, materialID, count, Recalculate);
             m_listItems.Add(listItem);
         }
-        for (int X = m_listItemsInUse; X < newSize; ++X)
+        Recalculate();
+    }
+
+    void Recalculate()
+    {
+        m_golemBuilder.Reset();
+        foreach (var listItem in m_listItems.OrderBy(MaterialListItemController.GetPriorityInGolemBuilding))
         {
-            m_listItems[X].transform.SetParent(m_contentTransform, false);
+            MaterialData material = listItem.GetSelectionData(out int selectedCount);
+            m_golemBuilder.AddMaterial(material, selectedCount);
         }
-        for (int X = newSize; X < m_listItems.Count; ++X)
-        {
-            m_listItems[X].transform.SetParent(null);
-        }
-        m_listItemsInUse = newSize;
+        m_golemBuilder.CalculateSkillChance();
+        m_builderPanel.Initialize(m_golemBuilder);
     }
 
     public void SelectAll()
     {
-        for (int X = 0; X < m_listItemsInUse; ++X)
+        for (int X = 0; X < m_listItems.Count; ++X)
         {
             m_listItems[X].SelectAll();
         }
+        Recalculate();
     }
 
     public MaterialListItemController GetItem(int index)

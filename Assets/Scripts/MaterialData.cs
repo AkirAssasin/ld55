@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum MaterialType
+public enum GolemStatType
 {
     Strength,
     Vitality,
@@ -13,6 +13,6 @@ public enum MaterialType
 [CreateAssetMenu(fileName = "New Material Data", menuName = "Scriptable Objects/Material Data")]
 public class MaterialData : ScriptableObject
 {
-    public int m_rarity;
-    public MaterialType m_type;
+    public MaterialRarityData m_rarity;
+    public GolemStatType m_type;
 }
