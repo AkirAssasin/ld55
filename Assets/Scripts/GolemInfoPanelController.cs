@@ -77,6 +77,11 @@ public class GolemInfoPanelController : MonoBehaviour
         return name;
     }
 
+    public void ResetInputFields()
+    {
+        m_nameInputField.text = string.Empty;
+    }
+
     void AddStatListItem(GolemStatType statType, string value)
     {
         GolemListItemController listItem = GolemListItemController.GetFromPool(m_listItemPrefab);

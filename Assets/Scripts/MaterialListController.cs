@@ -16,6 +16,7 @@ public class MaterialListController : MonoBehaviour
 
     public void Initialize(PlayerData playerData)
     {
+        m_builderPanel.ResetInputFields();
         for (int X = 0; X < m_listItems.Count; ++X)
         {
             m_listItems[X].Pool();

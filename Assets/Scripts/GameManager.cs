@@ -1,7 +1,16 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    enum GameState
+    {
+        MainLobby,
+        Summoning,
+        Combat,
+        Count
+    }
+
     public static GameManager Instance { get; private set; }
 
     [Header("Game Data")]
@@ -9,6 +18,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] ElementTypeData[] m_elementTypeDatas;
 
     [Header("Summoning UI")]
+    [SerializeField] Button m_summonButton;
     [SerializeField] GameObject m_summoningUIParent;
     [SerializeField] MaterialListController m_materialList;
 
@@ -16,6 +26,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject m_golemInspectUIParent;
     [SerializeField] GolemInfoPanelController m_golemInspectPanel;
 
+    GameState m_currentGameState = GameState.Count;
     PlayerData m_player;
 
     void Awake()
@@ -50,26 +61,56 @@ public class GameManager : MonoBehaviour
         m_golemInspectUIParent.SetActive(false);
         m_summoningUIParent.SetActive(false);
 
-        OpenSummoningUI();
+        ChangeGameState(GameState.MainLobby);
     }
 
-    public void CloseSummoningUI()
+    void ChangeGameState(GameState nextGameState)
     {
-        m_summoningUIParent.SetActive(false);
+        switch (m_currentGameState)
+        {
+            case GameState.MainLobby:
+                m_golemInspectUIParent.SetActive(false);
+                break;
+
+            case GameState.Summoning:
+                m_summoningUIParent.SetActive(false);
+                break;
+        }
+        m_currentGameState = nextGameState;
+        switch (m_currentGameState)
+        {
+            case GameState.MainLobby:
+                m_summonButton.interactable = (m_player.HasOpenGolemSlot() && m_player.m_inventory.Count > 0);
+                break;
+
+            case GameState.Summoning:
+                m_materialList.Initialize(m_player);
+                m_summoningUIParent.SetActive(true);
+                break;
+        }
     }
 
-    public void OpenSummoningUI()
+    #region UI Button Callbacks
+
+    public void OnSummonClicked() //button to enter summoning
     {
-        m_materialList.Initialize(m_player);
-        m_summoningUIParent.SetActive(true);
+        ChangeGameState(GameState.Summoning);
     }
 
-    public void OnSummonClicked()
+    public void OnSummonCompleted() //button to complete summoning
     {
         GolemData golem = m_materialList.SummonGolem(m_player);
-        CloseSummoningUI();
+        ChangeGameState(GameState.MainLobby);
         OpenGolemInspectUI(golem);
     }
+    public void OnSummoningCancelled() => ChangeGameState(GameState.MainLobby);
+
+    public void CloseGolemInspectUI()
+    {
+        m_golemInspectUIParent.SetActive(false);
+    }
+
+    #endregion
 
     public void OpenGolemInspectUI(GolemData golem)
     {

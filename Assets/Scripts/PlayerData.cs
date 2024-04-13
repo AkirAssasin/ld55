@@ -35,4 +35,9 @@ public class PlayerData
         }
         return remaining;
     }
+
+    public bool HasOpenGolemSlot()
+    {
+        return m_golems.Count < m_maxGolemSlots;
+    }
 }
