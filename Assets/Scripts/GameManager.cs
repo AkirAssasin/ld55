@@ -193,7 +193,7 @@ public class GameManager : MonoBehaviour
         m_expeditionResultsTextMesh.text = resultText;
 
         golem.m_health -= HealthPerExpedition;
-        CheckCanExpedition();
+        OnInspectedGolemHealthChanged();
         CheckCanSummon();
         m_expeditionHealthRemainingTextMesh.text = golem.GetStatString(GolemStatType.Vitality);
 
@@ -221,7 +221,7 @@ public class GameManager : MonoBehaviour
         m_golemInspectCrown.SetActive(isNew);
 
         m_golemInspectUnmakeButton.interactable = (m_player.m_golems.Count >= 2);
-        CheckCanExpedition();
+        OnInspectedGolemHealthChanged();
 
         m_golemInspectUnmake.SetActive(!isNew);
         m_golemInspectExpedition.SetActive(!isNew);
@@ -271,11 +271,12 @@ public class GameManager : MonoBehaviour
         m_summonButton.interactable = (m_player.HasOpenGolemSlot() && m_player.m_inventory.Count > 0);
     }
 
-    void CheckCanExpedition()
+    void OnInspectedGolemHealthChanged()
     {
         GolemData golem = m_player.m_golems[m_inspectGolemIndex];
-        bool can = (golem.m_health > HealthPerExpedition);
+        bool canExpedition = (golem.m_health > HealthPerExpedition);
+        m_golemInspectExpeditionButton.interactable = m_repeatExpeditionButton.interactable = canExpedition;
 
-        m_golemInspectExpeditionButton.interactable = m_repeatExpeditionButton.interactable = can;
+        m_golemSlots[m_inspectGolemIndex].SetHealth(golem);
     }
 }

@@ -7,6 +7,7 @@ public class GolemSlotController : PoolableObject<GolemSlotController>
 {
     [SerializeField] TextMeshProUGUI m_nameTextMesh;
     [SerializeField] Image m_icon;
+    [SerializeField] Slider m_healthbar;
 
     RectTransform m_rectTransform;
     Action m_onClicked;
@@ -28,6 +29,10 @@ public class GolemSlotController : PoolableObject<GolemSlotController>
         if (golem != null)
         {
             m_nameTextMesh.text = golem.m_name;
+
+            SetHealth(golem);
+            m_healthbar.gameObject.SetActive(true);
+
             m_icon.sprite = golem.m_elementType.m_icon;
             m_icon.color = golem.m_elementType.m_color;
             m_icon.enabled = true;
@@ -36,7 +41,13 @@ public class GolemSlotController : PoolableObject<GolemSlotController>
         {
             m_nameTextMesh.text = "-";
             m_icon.enabled = false;
+            m_healthbar.gameObject.SetActive(false);
         }
+    }
+
+    public void SetHealth(GolemData golem)
+    {
+        m_healthbar.value = (float)golem.m_health / golem.GetMaxHealth();
     }
 
     new public void Pool()
