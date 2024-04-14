@@ -65,11 +65,12 @@ public class MaterialListController : MonoBehaviour
 
     public int SummonGolem(PlayerData player)
     {
+        Dictionary<int, int> materialsUsed = new Dictionary<int, int>();
         for (int X = 0; X < m_listItems.Count; ++X)
         {
-            m_listItems[X].RemoveFromPlayerInventory(player);
+            m_listItems[X].RemoveFromPlayerInventory(player, materialsUsed);
         }
-        GolemData golem = m_golemBuilder.SummonGolem(m_builderPanel.GetInputFieldName());
+        GolemData golem = m_golemBuilder.SummonGolem(m_builderPanel.GetInputFieldName(), materialsUsed);
         player.m_golems.Add(golem);
         return player.m_golems.Count - 1;
     }

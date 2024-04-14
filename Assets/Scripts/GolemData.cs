@@ -52,10 +52,10 @@ public class GolemBuilder
         }
     }
 
-    public GolemData SummonGolem(string name)
+    public GolemData SummonGolem(string name, Dictionary<int, int> materials)
     {
         //create golem with random weakness
-        GolemData golemData = new(name, GameManager.GetRandomElement());
+        GolemData golemData = new(name, GameManager.GetRandomElement(), materials);
 
         //generate stats
         for (int X = 0; X < (int)GolemStatType.Count; ++X)
@@ -95,6 +95,8 @@ public class GolemData
 
     public const int StatMax = 100;
 
+    public readonly Dictionary<int, int> m_originalMaterials;
+
     public readonly string m_name;
     public readonly int[] m_stats = new int[(int)GolemStatType.Count];
 
@@ -104,10 +106,11 @@ public class GolemData
 
     public int m_health;
 
-    public GolemData(string name, ElementTypeData elementType)
+    public GolemData(string name, ElementTypeData elementType, Dictionary<int, int> originalMaterials)
     {
         m_name = name;
         m_elementType = elementType;
+        m_originalMaterials = originalMaterials;
     }
 
     public static string GetStatLabel(GolemStatType statType)

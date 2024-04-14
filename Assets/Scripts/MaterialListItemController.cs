@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -70,8 +71,9 @@ public class MaterialListItemController : PoolableObject<MaterialListItemControl
 
     public void SelectAll() => SetSelectedCount(m_maxCount);
 
-    public void RemoveFromPlayerInventory(PlayerData player)
+    public void RemoveFromPlayerInventory(PlayerData player, Dictionary<int, int> materialsUsed)
     {
+        materialsUsed[m_materialID] = m_selectedCount;
         int remaining = player.RemoveFromInventory(m_materialID, m_selectedCount);
         SetMaxCount(remaining);
     }

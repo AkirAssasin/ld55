@@ -59,6 +59,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject m_combatUIParent;
     [SerializeField] CombatManager m_combatManager;
 
+    [Header("Unmake UI")]
+    [SerializeField] GameObject m_unmakeUIParent;
+    [SerializeField] GameObject m_unmakeListItemPrefab;
+    [SerializeField] RectTransform m_unmakeUIListParent;
+
+    readonly List<UnmakeListItemController> m_unmakeListItems = new List<UnmakeListItemController>();
+
     GameState m_currentGameState = GameState.Count;
     PlayerData m_player;
 
@@ -125,6 +132,7 @@ public class GameManager : MonoBehaviour
         m_summoningUIParent.SetActive(false);
         m_expeditionUIParent.SetActive(false);
         m_combatUIParent.SetActive(false);
+        m_unmakeUIParent.SetActive(false);
 
         RebuildGolemSlots();
         ChangeGameState(GameState.MainLobby);
@@ -171,22 +179,49 @@ public class GameManager : MonoBehaviour
     {
         if (m_currentGameState == GameState.Combat && m_combatManager.m_combatState == CombatState.OutOfCombat)
         {
-            //remove dead golems
+            //remove dead golems and add them to the unmake list
             for (int X = m_player.m_golems.Count - 1; X > -1; --X)
             {
-                if (m_player.m_golems[X].m_health <= 0)
+                GolemData golem = m_player.m_golems[X];
+                if (golem.m_health <= 0)
                 {
                     m_player.m_golems.RemoveAt(X);
+                    UnmakeListItemController unmakeItem = UnmakeListItemController.GetFromPool(m_unmakeListItemPrefab);
+                    unmakeItem.Initialize(m_unmakeUIListParent, golem, OnSalvage, OnFeed);
+                    m_unmakeListItems.Add(unmakeItem);
+
                 }
             }
             ReassignGolemSlots();
 
             //m_combatManager.m_lastWinningTeam
             ChangeGameState(GameState.MainLobby);
+            m_unmakeUIParent.SetActive(true);
         }
     }
 
+    void RemoveUnmakeListItem(UnmakeListItemController unmakeListItem)
+    {
+        unmakeListItem.Pool();
+        m_unmakeListItems.Remove(unmakeListItem);
+        if (m_unmakeListItems.Count == 0) m_unmakeUIParent.SetActive(false);
+    }
+
     #region UI Button Callbacks
+
+    public void OnSalvage(UnmakeListItemController unmakeListItem)
+    {
+        foreach (var (materialID, count) in unmakeListItem.m_golem.m_originalMaterials)
+        {
+            m_player.AddIntoInventory(materialID, count);
+        }
+        CheckCanSummon();
+        RemoveUnmakeListItem(unmakeListItem);
+    }
+
+    public void OnFeed(UnmakeListItemController unmakeListItem)
+    {
+    }
 
     public void OnSummonClicked() //button to enter summoning
     {

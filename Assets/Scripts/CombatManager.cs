@@ -27,8 +27,6 @@ public class GolemInCombat
 
     public void PoolSlotController() => m_slotController.Pool();
 
-    public void RemoveFromCombat() => m_slotController.SetGolemData(null);
-
     public BaseSkillData ChooseIntelligentAction(List<GolemInCombat> combatState, out GolemInCombat target)
     {
         for (int X = 0; X < m_golem.m_skills.Count; ++X)
@@ -231,7 +229,7 @@ public class CombatManager : MonoBehaviour
             {
                 //no longer alive
                 m_golemsInCombat.RemoveAt(X);
-                golemInCombat.RemoveFromCombat();
+                golemInCombat.PoolSlotController();
             }
         }
         if (isWin)
