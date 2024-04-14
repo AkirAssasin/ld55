@@ -63,8 +63,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject m_unmakeUIParent;
     [SerializeField] GameObject m_unmakeListItemPrefab;
     [SerializeField] RectTransform m_unmakeUIListParent;
+    [SerializeField] GameObject m_feedPromptObject;
 
     readonly List<UnmakeListItemController> m_unmakeListItems = new List<UnmakeListItemController>();
+    GolemData m_feedingThisGolem = null;
 
     GameState m_currentGameState = GameState.Count;
     PlayerData m_player;
@@ -204,7 +206,6 @@ public class GameManager : MonoBehaviour
     {
         unmakeListItem.Pool();
         m_unmakeListItems.Remove(unmakeListItem);
-        if (m_unmakeListItems.Count == 0) m_unmakeUIParent.SetActive(false);
     }
 
     #region UI Button Callbacks
@@ -217,10 +218,16 @@ public class GameManager : MonoBehaviour
         }
         CheckCanSummon();
         RemoveUnmakeListItem(unmakeListItem);
+        if (m_unmakeListItems.Count == 0) m_unmakeUIParent.SetActive(false);
     }
 
     public void OnFeed(UnmakeListItemController unmakeListItem)
     {
+        m_feedingThisGolem = unmakeListItem.m_golem;
+
+        CheckCanSummon();
+        RemoveUnmakeListItem(unmakeListItem);
+        m_unmakeUIParent.SetActive(false);
     }
 
     public void OnSummonClicked() //button to enter summoning
@@ -241,6 +248,8 @@ public class GameManager : MonoBehaviour
     {
         m_golemInspectUIParent.SetActive(false);
         m_inspectGolemIndex = -1;
+
+        if (m_unmakeListItems.Count > 0) m_unmakeUIParent.SetActive(true);
     }
 
     public void DoExpedition()
@@ -345,7 +354,19 @@ public class GameManager : MonoBehaviour
 
     void OnGolemSlotClicked(int index)
     {
-        if (index < m_player.m_golems.Count)
+        if (index >= m_player.m_golems.Count) return;
+        if (m_feedingThisGolem != null)
+        {
+            GolemData golem = m_player.m_golems[index];
+            golem.Feed(m_feedingThisGolem);
+            m_golemSlots[index].SetGolemData(golem);
+
+            m_feedingThisGolem = null;
+            m_feedPromptObject.SetActive(false);
+
+            OpenGolemInspectUI(index, true);
+        }
+        else
         {
             OpenGolemInspectUI(index, false);
         }
@@ -382,7 +403,16 @@ public class GameManager : MonoBehaviour
 
     void CheckCanSummon()
     {
-        m_summonButton.interactable = (m_player.HasOpenGolemSlot() && m_player.m_inventory.Count > 0);
+        if (m_unmakeListItems.Count > 0)
+        {
+            m_feedPromptObject.SetActive(true);
+            m_summonButton.interactable = false;
+        }
+        else
+        {
+            m_feedPromptObject.SetActive(false);
+            m_summonButton.interactable = (m_player.HasOpenGolemSlot() && m_player.m_inventory.Count > 0);
+        }
     }
 
     void OnInspectedGolemHealthChanged()

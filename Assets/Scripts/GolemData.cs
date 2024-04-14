@@ -93,7 +93,7 @@ public class GolemData
         return s_namePool[Random.Range(0, s_namePool.Length)];
     }
 
-    public const int StatMax = 100;
+    public const int StatMax = 100, SkillMax = 6;
 
     public readonly Dictionary<int, int> m_originalMaterials;
 
@@ -137,5 +137,28 @@ public class GolemData
     public bool DoStatsRoll(GolemStatType statType)
     {
          return Random.Range(0, StatMax) < m_stats[(int)statType];
+    }
+
+    public void Feed(GolemData eatThis)
+    {
+        for (int X = 0; X < (int)GolemStatType.Count; ++X)
+        {
+            float effectiveness = 1f;
+            if (eatThis.m_stats[X] < m_stats[X])
+            {
+                effectiveness = (float)eatThis.m_stats[X] / m_stats[X];
+            }
+            int gain = (int)(Mathf.Abs(eatThis.m_stats[X] - m_stats[X]) * effectiveness * Random.value);
+            m_stats[X] = Mathf.Min(m_stats[X] + gain, StatMax);
+        }
+
+        List<BaseSkillData> skills = new List<BaseSkillData>(m_skills);
+        skills.AddRange(eatThis.m_skills);
+        while (skills.Count > SkillMax) skills.RemoveAt(Random.Range(0, skills.Count));
+
+        m_skills.Clear();
+        m_skills.AddRange(skills.OrderBy(s => s.m_skillPriority));
+
+        m_health = GetMaxHealth();
     }
 }
