@@ -67,6 +67,8 @@ public class GolemBuilder
 
         //generate skills
         GameManager.GetRandomSkills(m_skillChance, golemData.m_skills);
+        golemData.m_skills = golemData.m_skills.OrderBy(s => s.m_skillPriority).ToList();
+
         return golemData;
     }
 
@@ -98,7 +100,7 @@ public class GolemData
 
     public readonly ElementTypeData m_elementType;
 
-    public readonly List<BaseSkillData> m_skills = new List<BaseSkillData>();
+    public List<BaseSkillData> m_skills = new List<BaseSkillData>();
 
     public int m_health;
 
@@ -128,4 +130,9 @@ public class GolemData
     }
 
     public bool CanBeCrowned() => false;
+
+    public bool DoStatsRoll(GolemStatType statType)
+    {
+         return Random.Range(0, StatMax) < m_stats[(int)statType];
+    }
 }

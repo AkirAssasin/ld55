@@ -30,6 +30,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject m_summoningUIParent;
     [SerializeField] MaterialListController m_materialList;
 
+    [Header("Main UI")]
+    [SerializeField] GameObject m_mainUIParent;
+
     [Header("Golem Inspect UI")]
     [SerializeField] GameObject m_golemInspectUIParent;
     [SerializeField] GolemInfoPanelController m_golemInspectPanel;
@@ -39,6 +42,8 @@ public class GameManager : MonoBehaviour
     [Header("Golem Slots UI")]
     [SerializeField] GameObject m_golemSlotPrefab;
     [SerializeField] RectTransform m_golemSlotParent;
+    
+    readonly List<GolemSlotController> m_golemSlots = new List<GolemSlotController>();
 
     [Header("Expedition UI")]
     [SerializeField] GameObject m_expeditionUIParent;
@@ -50,7 +55,10 @@ public class GameManager : MonoBehaviour
 
     TextMeshProUGUI m_golemInspectHealLabel;
 
-    readonly List<GolemSlotController> m_golemSlots = new List<GolemSlotController>();
+    [Header("Combat UI")]
+    [SerializeField] GameObject m_combatUIParent;
+    [SerializeField] CombatManager m_combatManager;
+
     GameState m_currentGameState = GameState.Count;
     PlayerData m_player;
 
@@ -116,6 +124,7 @@ public class GameManager : MonoBehaviour
         m_golemInspectUIParent.SetActive(false);
         m_summoningUIParent.SetActive(false);
         m_expeditionUIParent.SetActive(false);
+        m_combatUIParent.SetActive(false);
 
         RebuildGolemSlots();
         ChangeGameState(GameState.MainLobby);
@@ -126,11 +135,16 @@ public class GameManager : MonoBehaviour
         switch (m_currentGameState)
         {
             case GameState.MainLobby:
-                m_golemInspectUIParent.SetActive(false);
+                m_mainUIParent.SetActive(false);
                 break;
 
             case GameState.Summoning:
                 m_summoningUIParent.SetActive(false);
+                break;
+
+            case GameState.Combat:
+                m_combatManager.ResetCombat();
+                m_combatUIParent.SetActive(false);
                 break;
         }
         m_currentGameState = nextGameState;
@@ -138,12 +152,37 @@ public class GameManager : MonoBehaviour
         {
             case GameState.MainLobby:
                 CheckCanSummon();
+                m_mainUIParent.SetActive(true);
                 break;
 
             case GameState.Summoning:
                 m_materialList.Initialize(m_player);
                 m_summoningUIParent.SetActive(true);
                 break;
+
+            case GameState.Combat:
+                m_combatManager.StartCombat();
+                m_combatUIParent.SetActive(true);
+                break;
+        }
+    }
+
+    void Update()
+    {
+        if (m_currentGameState == GameState.Combat && m_combatManager.m_combatState == CombatState.OutOfCombat)
+        {
+            //remove dead golems
+            for (int X = m_player.m_golems.Count - 1; X > -1; --X)
+            {
+                if (m_player.m_golems[X].m_health <= 0)
+                {
+                    m_player.m_golems.RemoveAt(X);
+                }
+            }
+            ReassignGolemSlots();
+
+            //m_combatManager.m_lastWinningTeam
+            ChangeGameState(GameState.MainLobby);
         }
     }
 
@@ -227,6 +266,24 @@ public class GameManager : MonoBehaviour
         OnInspectedGolemHealthChanged();
     }
 
+    public void OnUnmakeInspectedGolem()
+    {
+        //let's go babyyyy combat time :(
+        for (int X = 0; X < m_player.m_golems.Count; ++X)
+        {
+            //set team
+            int team = 0;
+            if (X == m_inspectGolemIndex) team = 1;
+
+            //add into combat
+            m_combatManager.AddGolemIntoCombat(m_player.m_golems[X], team);
+        }
+
+        //enter combat
+        CloseGolemInspectUI();
+        ChangeGameState(GameState.Combat);
+    }
+
     #endregion
 
     void OpenGolemInspectUI(int index, bool isNew)
@@ -300,6 +357,7 @@ public class GameManager : MonoBehaviour
         m_golemInspectExpeditionButton.interactable = m_repeatExpeditionButton.interactable = canExpedition;
 
         m_golemSlots[m_inspectGolemIndex].SetHealth(golem);
+        m_golemInspectPanel.Initialize(golem, false);
         CheckCanHealInspectedGolem();
     }
 
