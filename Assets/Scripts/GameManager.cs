@@ -34,7 +34,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject m_golemInspectUIParent;
     [SerializeField] GolemInfoPanelController m_golemInspectPanel;
     [SerializeField] GameObject m_golemInspectOK, m_golemInspectUnmake,
-        m_golemInspectCrown, m_golemInspectExpedition;
+        m_golemInspectCrown, m_golemInspectExpedition, m_golemInspectHeal;
 
     [Header("Golem Slots UI")]
     [SerializeField] GameObject m_golemSlotPrefab;
@@ -45,7 +45,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI m_expeditionResultsTextMesh, m_expeditionHealthRemainingTextMesh;
     [SerializeField] Button m_repeatExpeditionButton;
     
-    Button m_golemInspectCrownButton, m_golemInspectUnmakeButton, m_golemInspectExpeditionButton;
+    Button m_golemInspectCrownButton, m_golemInspectUnmakeButton,
+        m_golemInspectExpeditionButton, m_golemInspectHealButton;
+
+    TextMeshProUGUI m_golemInspectHealLabel;
 
     readonly List<GolemSlotController> m_golemSlots = new List<GolemSlotController>();
     GameState m_currentGameState = GameState.Count;
@@ -104,6 +107,9 @@ public class GameManager : MonoBehaviour
         m_golemInspectCrownButton = m_golemInspectCrown.GetComponent<Button>();
         m_golemInspectUnmakeButton = m_golemInspectUnmake.GetComponent<Button>();
         m_golemInspectExpeditionButton = m_golemInspectExpedition.GetComponent<Button>();
+
+        m_golemInspectHealButton = m_golemInspectHeal.GetComponent<Button>();
+        m_golemInspectHealLabel = m_golemInspectHeal.GetComponentInChildren<TextMeshProUGUI>();
 
         m_player = new PlayerData();
 
@@ -186,9 +192,16 @@ public class GameManager : MonoBehaviour
         string resultText = $"{golem.m_name} has found the following:";
         foreach (var (materialID, count) in m_lastExpeditionResults)
         {
-            MaterialData materialData = GetMaterialData(materialID);
             m_player.AddIntoInventory(materialID, count);
-            resultText += $"\n<color=#{ColorUtility.ToHtmlStringRGB(materialData.m_rarity.m_color)}>{materialData.name}</color> x{count}";
+            if (materialID == -1)
+            {
+                resultText += $"\nHealth Potion x{count}";
+            }
+            else
+            {
+                MaterialData materialData = GetMaterialData(materialID);
+                resultText += $"\n<color=#{ColorUtility.ToHtmlStringRGB(materialData.m_rarity.m_color)}>{materialData.name}</color> x{count}";
+            }
         }
         m_expeditionResultsTextMesh.text = resultText;
 
@@ -204,6 +217,14 @@ public class GameManager : MonoBehaviour
     {
         m_expeditionUIParent.SetActive(false);
         OpenGolemInspectUI(m_inspectGolemIndex, false);
+    }
+
+    public void OnHealInspected()
+    {
+        --m_player.m_potionCount;
+        GolemData golem = m_player.m_golems[m_inspectGolemIndex];
+        golem.m_health = Mathf.Min(golem.m_health + 5, golem.GetMaxHealth());
+        OnInspectedGolemHealthChanged();
     }
 
     #endregion
@@ -225,6 +246,7 @@ public class GameManager : MonoBehaviour
 
         m_golemInspectUnmake.SetActive(!isNew);
         m_golemInspectExpedition.SetActive(!isNew);
+        m_golemInspectHeal.SetActive(!isNew);
 
         m_golemInspectUIParent.SetActive(true);
     }
@@ -278,5 +300,13 @@ public class GameManager : MonoBehaviour
         m_golemInspectExpeditionButton.interactable = m_repeatExpeditionButton.interactable = canExpedition;
 
         m_golemSlots[m_inspectGolemIndex].SetHealth(golem);
+        CheckCanHealInspectedGolem();
+    }
+
+    void CheckCanHealInspectedGolem()
+    {
+        GolemData golem = m_player.m_golems[m_inspectGolemIndex];
+        m_golemInspectHealLabel.text = $"Heal ({m_player.m_potionCount})";
+        m_golemInspectHealButton.interactable = golem.m_health < golem.GetMaxHealth() && m_player.m_potionCount > 0;
     }
 }
