@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
@@ -12,6 +13,7 @@ public class GameManager : MonoBehaviour
         MainLobby,
         Summoning,
         Combat,
+        End,
         Count
     }
 
@@ -70,12 +72,18 @@ public class GameManager : MonoBehaviour
     readonly List<UnmakeListItemController> m_unmakeListItems = new List<UnmakeListItemController>();
     GolemData m_feedingThisGolem = null;
 
+    [Header("End UI")]
+    [SerializeField] GameObject m_endUIParent;
+    [SerializeField] TextMeshProUGUI m_endTextMesh;
+
     GameState m_currentGameState = GameState.Count;
     PlayerData m_player;
 
     MaterialWeightedBag m_inspectGolemExpeditionBag = null;
     readonly Dictionary<int, int> m_lastExpeditionResults = new Dictionary<int, int>();
     int m_inspectGolemIndex = -1;
+
+    bool m_willWinIfCombatWon = false;
 
     void Awake()
     {
@@ -139,6 +147,7 @@ public class GameManager : MonoBehaviour
         m_expeditionUIParent.SetActive(false);
         m_combatUIParent.SetActive(false);
         m_unmakeUIParent.SetActive(false);
+        m_endUIParent.SetActive(false);
 
         RebuildGolemSlots();
         ChangeGameState(GameState.MainLobby);
@@ -178,6 +187,10 @@ public class GameManager : MonoBehaviour
                 m_combatManager.StartCombat();
                 m_combatUIParent.SetActive(true);
                 break;
+
+            case GameState.End:
+                m_endUIParent.SetActive(true);
+                break;
         }
     }
 
@@ -200,9 +213,25 @@ public class GameManager : MonoBehaviour
             }
             ReassignGolemSlots();
 
-            //m_combatManager.m_lastWinningTeam
-            ChangeGameState(GameState.MainLobby);
-            m_unmakeUIParent.SetActive(true);
+            //check if joever
+            if (m_combatManager.m_lastWinningTeam == 1)
+            {
+                //you lost
+                m_endTextMesh.text = "Game Over";
+                ChangeGameState(GameState.End);
+            }
+            else if (m_willWinIfCombatWon)
+            {
+                //you won
+                m_endTextMesh.text = "Golem Crowned";
+                ChangeGameState(GameState.End);
+            }
+            else
+            {
+                //keep grinding
+                ChangeGameState(GameState.MainLobby);
+                m_unmakeUIParent.SetActive(true);
+            }
         }
     }
 
@@ -213,6 +242,11 @@ public class GameManager : MonoBehaviour
     }
 
     #region UI Button Callbacks
+
+    public void OnRestart()
+    {
+        SceneManager.LoadScene(0);
+    }
 
     public void OnSalvage(UnmakeListItemController unmakeListItem)
     {
@@ -331,6 +365,25 @@ public class GameManager : MonoBehaviour
         }
 
         //enter combat
+        CloseGolemInspectUI();
+        ChangeGameState(GameState.Combat);
+    }
+
+    public void OnCrownInspectedGolem()
+    {
+        //let's go babyyyy combat time :(
+        for (int X = 0; X < m_player.m_golems.Count; ++X)
+        {
+            //set team
+            int team = 1;
+            if (X == m_inspectGolemIndex) team = 0;
+
+            //add into combat
+            m_combatManager.AddGolemIntoCombat(m_player.m_golems[X], team);
+        }
+
+        //enter combat
+        m_willWinIfCombatWon = true;
         CloseGolemInspectUI();
         ChangeGameState(GameState.Combat);
     }
