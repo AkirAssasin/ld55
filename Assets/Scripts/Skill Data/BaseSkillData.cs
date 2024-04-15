@@ -17,5 +17,20 @@ public abstract class BaseSkillData : ScriptableObject
 
     public abstract bool TryDoSmartMove(GolemInCombat self, List<GolemInCombat> combatState, bool forceDoAction, out GolemInCombat target);
 
-    public abstract void PerformAction(GolemInCombat self, List<GolemInCombat> combatState, GolemInCombat target);
+    public abstract void PerformAction(GolemInCombat self, List<GolemInCombat> combatState, GolemInCombat target, out string log);
+
+    protected string MakeBasicLog(GolemInCombat self, GolemInCombat target)
+    {
+        string targetName;
+        if (m_isSingleTarget)
+        {
+            targetName = target.m_golem.m_name;
+        }
+        else if (target.m_team == self.m_team)
+        {
+            targetName = "allies";
+        }
+        else targetName = "the enemy";
+        return $"{self.m_golem.m_name} used {name} on {targetName}!";
+    }
 }

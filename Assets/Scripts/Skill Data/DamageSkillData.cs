@@ -34,7 +34,7 @@ public class DamageSkillData : BaseSkillData
         return forceDoAction;
     }
 
-    public override void PerformAction(GolemInCombat self, List<GolemInCombat> combatState, GolemInCombat target)
+    public override void PerformAction(GolemInCombat self, List<GolemInCombat> combatState, GolemInCombat target, out string log)
     {
         if (m_isSingleTarget)
         {
@@ -50,6 +50,7 @@ public class DamageSkillData : BaseSkillData
                 DoDamage(self, targets[X]);
             }
         }
+        log = MakeBasicLog(self, target);
     }
 
     void DoDamage(GolemInCombat self, GolemInCombat target)

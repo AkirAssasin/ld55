@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 
 public class GolemInCombat
@@ -67,6 +68,7 @@ public class CombatManager : MonoBehaviour
 
     [SerializeField] GameObject m_golemSlotPrefab;
     [SerializeField] RectTransform[] m_teamSlotParents;
+    [SerializeField] TextMeshProUGUI m_combatLogTextMesh;
 
     public const int BaseSpeed = 100;
     public const int TimePerAction = 10000;
@@ -118,6 +120,9 @@ public class CombatManager : MonoBehaviour
     {
         if (m_combatState == CombatState.OutOfCombat)
             m_combatState = CombatState.WaitingForNextTurn;
+
+        m_combatLogTextMesh.text = "Entering combat!";
+        m_currentTurnUpdate.Start(WaitForLeftClickCoroutine());
     }
 
     //update
@@ -150,12 +155,12 @@ public class CombatManager : MonoBehaviour
             case CombatState.SelectingAction:
                 {
                     //check if obedient
-                    if (m_currentTurnOwner.m_golem.DoStatsRoll(GolemStatType.Obedience))
+                    /*if (m_currentTurnOwner.m_golem.DoStatsRoll(GolemStatType.Obedience))
                     {
                         //is obedient; wait for user action
                         m_currentTurnUpdate.Start(WaitForUserActionCoroutine());
                     }
-                    else if (m_currentTurnOwner.m_golem.DoStatsRoll(GolemStatType.Intelligence))
+                    else*/ if (m_currentTurnOwner.m_golem.DoStatsRoll(GolemStatType.Intelligence))
                     {
                         //is intelligent; pick an intelligent action
                         m_currentTurnSkill = m_currentTurnOwner.ChooseIntelligentAction(m_golemsInCombat, out m_currentTurnTarget);
@@ -173,7 +178,6 @@ public class CombatManager : MonoBehaviour
                     }
 
                     //go next state
-                    Debug.Log($"{Time.time}: {m_currentTurnOwner.m_golem.m_name} uses {m_currentTurnSkill.name}");
                     m_combatState = CombatState.PerformingAction;
                     break;
                 }
@@ -196,12 +200,27 @@ public class CombatManager : MonoBehaviour
         while (true) yield return null;
     }
 
+    IEnumerator WaitForLeftClickCoroutine()
+    {
+        do
+        {
+            yield return null;
+        }
+        while (!Input.GetMouseButtonDown(0));
+    }
+
     IEnumerator PerformActionCoroutine()
     {
         //perform action
         if (m_currentTurnSkill != null)
         {
-            m_currentTurnSkill.PerformAction(m_currentTurnOwner, m_golemsInCombat, m_currentTurnTarget);
+            m_currentTurnSkill.PerformAction(m_currentTurnOwner, m_golemsInCombat, m_currentTurnTarget, out string log);
+            m_combatLogTextMesh.text = log;
+        }
+        else
+        {
+            
+            m_combatLogTextMesh.text = $"{m_currentTurnOwner.m_golem.m_name} does nothing!";
         }
 
         //reset action value
@@ -228,6 +247,10 @@ public class CombatManager : MonoBehaviour
             else
             {
                 //no longer alive
+                yield return WaitForLeftClickCoroutine();
+                m_combatLogTextMesh.text = $"{golemInCombat.m_golem.m_name} has been defeated!";
+                yield return WaitForLeftClickCoroutine();
+
                 m_golemsInCombat.RemoveAt(X);
                 golemInCombat.PoolSlotController();
             }
@@ -246,7 +269,6 @@ public class CombatManager : MonoBehaviour
         }
 
         //wait for user input
-        yield return null;
-        while (!Input.anyKeyDown) yield return null;
+        yield return WaitForLeftClickCoroutine();
     }
 }

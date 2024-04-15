@@ -149,11 +149,11 @@ public class GolemData
                 effectiveness = (float)eatThis.m_stats[X] / m_stats[X];
             }
             int gain = (int)(Mathf.Abs(eatThis.m_stats[X] - m_stats[X]) * effectiveness * Random.value);
+            Debug.Log($"{Time.time}: gained {gain} {(GolemStatType)X}");
             m_stats[X] = Mathf.Min(m_stats[X] + gain, StatMax);
         }
 
-        List<BaseSkillData> skills = new List<BaseSkillData>(m_skills);
-        skills.AddRange(eatThis.m_skills);
+        List<BaseSkillData> skills = m_skills.Union(eatThis.m_skills).ToList();
         while (skills.Count > SkillMax) skills.RemoveAt(Random.Range(0, skills.Count));
 
         m_skills.Clear();
