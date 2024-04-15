@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    const int HealthPerExpedition = 1;
+    const int LoyaltyPerExpedition = 1;
 
     enum GameState
     {
@@ -320,7 +320,7 @@ public class GameManager : MonoBehaviour
             m_player.AddIntoInventory(materialID, count);
             if (materialID == -1)
             {
-                resultText += $"\nHealth Potion x{count}";
+                resultText += $"\nLove x{count}";
             }
             else
             {
@@ -330,8 +330,8 @@ public class GameManager : MonoBehaviour
         }
         m_expeditionResultsTextMesh.text = resultText;
 
-        golem.m_health -= HealthPerExpedition * m_repeatExpeditionCount;
-        OnInspectedGolemHealthChanged();
+        golem.m_loyalty -= LoyaltyPerExpedition * m_repeatExpeditionCount;
+        OnInspectedGolemLoyaltyChanged();
         CheckCanSummon();
 
         m_expeditionUIParent.SetActive(true);
@@ -347,26 +347,44 @@ public class GameManager : MonoBehaviour
     {
         --m_player.m_potionCount;
         GolemData golem = m_player.m_golems[m_inspectGolemIndex];
-        golem.m_health = Mathf.Min(golem.m_health + 5, golem.GetMaxHealth());
-        OnInspectedGolemHealthChanged();
+        golem.m_loyalty = Mathf.Min(golem.m_loyalty + 5, golem.GetMaxLoyalty());
+        OnInspectedGolemLoyaltyChanged();
     }
 
     public void OnUnmakeInspectedGolem()
     {
         //let's go babyyyy combat time :(
+        bool gotAlly = false;
         for (int X = 0; X < m_player.m_golems.Count; ++X)
         {
+            //get golem
+            GolemData golem = m_player.m_golems[X];
+
             //set team
             int team = 0;
-            if (X == m_inspectGolemIndex) team = 1;
+            if (X == m_inspectGolemIndex || golem.DoLoyaltyRoll())
+            {
+                team = 1;
+            }
+            else gotAlly = true;
 
             //add into combat
             m_combatManager.AddGolemIntoCombat(m_player.m_golems[X], team);
         }
-
-        //enter combat
+        
         CloseGolemInspectUI();
-        ChangeGameState(GameState.Combat);
+        if (gotAlly)
+        {
+            //enter combat
+            ChangeGameState(GameState.Combat);
+        }
+        else
+        {
+            //you died lmao
+            m_endTextMesh.text = "Full Betrayal";
+            ChangeGameState(GameState.End);
+        }
+
     }
 
     public void OnCrownInspectedGolem()
@@ -403,7 +421,7 @@ public class GameManager : MonoBehaviour
         m_golemInspectCrown.SetActive(isNew);
 
         m_golemInspectUnmakeButton.interactable = (m_player.m_golems.Count >= 2);
-        OnInspectedGolemHealthChanged();
+        OnInspectedGolemLoyaltyChanged();
         m_repeatExpeditionSlider.value = 1;
 
         m_golemInspectUnmake.SetActive(!isNew);
@@ -476,18 +494,16 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void OnInspectedGolemHealthChanged()
+    void OnInspectedGolemLoyaltyChanged()
     {
         GolemData golem = m_player.m_golems[m_inspectGolemIndex];
-        bool canExpedition = (golem.m_health > HealthPerExpedition);
+        bool canExpedition = (golem.m_loyalty > LoyaltyPerExpedition);
         m_golemInspectExpeditionButton.interactable = m_repeatExpeditionButton.interactable = canExpedition;
 
-        m_golemSlots[m_inspectGolemIndex].SetHealth(golem);
         m_golemInspectPanel.Initialize(golem);
-        CheckCanHealInspectedGolem();
+        CheckCanFeedInspectedGolem();
 
-        m_repeatExpeditionSlider.maxValue = Mathf.Max(1, (golem.m_health - 1) / HealthPerExpedition);
-        //OnRepeatSliderChanged(m_repeatExpeditionSlider.value);
+        m_repeatExpeditionSlider.maxValue = Mathf.Max(1, (golem.m_loyalty - 1) / LoyaltyPerExpedition);
     }
 
     public void OnRepeatSliderChanged(float value)
@@ -496,10 +512,10 @@ public class GameManager : MonoBehaviour
         m_expeditionRepeatButtonTextMesh.text = $"Repeat x{m_repeatExpeditionCount}";
     }
 
-    void CheckCanHealInspectedGolem()
+    void CheckCanFeedInspectedGolem()
     {
         GolemData golem = m_player.m_golems[m_inspectGolemIndex];
-        m_golemInspectHealLabel.text = $"Heal ({m_player.m_potionCount})";
-        m_golemInspectHealButton.interactable = golem.m_health < golem.GetMaxHealth() && m_player.m_potionCount > 0;
+        m_golemInspectHealLabel.text = $"Love ({m_player.m_potionCount})";
+        m_golemInspectHealButton.interactable = golem.m_loyalty < golem.GetMaxLoyalty() && m_player.m_potionCount > 0;
     }
 }

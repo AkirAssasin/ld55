@@ -185,7 +185,7 @@ public class CombatManager : MonoBehaviour
             case CombatState.SelectingAction:
                 {
                     //check if obedient
-                    if (m_currentTurnOwner.m_golem.DoStatsRoll(GolemStatType.Obedience))
+                    if (m_currentTurnOwner.m_team == 0 && m_currentTurnOwner.m_golem.DoStatsRoll(GolemStatType.Obedience))
                     {
                         //is obedient; wait for user action
                         m_combatLogTextMesh.text = $"{m_currentTurnOwner.m_golem.m_name} is awaiting your command.";

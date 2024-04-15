@@ -41,7 +41,7 @@ public class ExpeditionAffinity
         if (m_rarity != null) return m_rarity.name;
         if (m_material != null) return m_material.name;
         if (m_materialType != GolemStatType.Count) return GolemData.GetStatLabel(m_materialType);
-        if (m_healthPotion) return "Health Potion";
+        if (m_healthPotion) return "Love";
         return "None";
     }
 }

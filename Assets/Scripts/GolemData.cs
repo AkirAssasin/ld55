@@ -64,6 +64,7 @@ public class GolemBuilder
             golemData.m_stats[X] = Random.Range(minStatInt, maxStatInt + 1);
         }
         golemData.m_health = golemData.GetMaxHealth();
+        golemData.m_loyalty = golemData.GetMaxLoyalty();
 
         //generate skills
         GameManager.GetRandomSkills(m_skillChance, golemData.m_skills);
@@ -109,6 +110,7 @@ public class GolemData
     public List<BaseSkillData> m_skills = new List<BaseSkillData>();
 
     public int m_health;
+    public int m_loyalty;
 
     public GolemData(string name, ElementTypeData elementType, Dictionary<int, int> originalMaterials)
     {
@@ -127,11 +129,20 @@ public class GolemData
         return (1 + m_stats[(int)GolemStatType.Vitality]) * 10;
     }
 
+    public int GetMaxLoyalty()
+    {
+        return (1 + m_stats[(int)GolemStatType.Obedience]) * 10;
+    }
+
     public string GetStatString(GolemStatType statType)
     {
         if (statType == GolemStatType.Vitality)
         {
             return $"{m_health} / {GetMaxHealth()}";
+        }
+        if (statType == GolemStatType.Obedience)
+        {
+            return $"{m_loyalty} / {GetMaxLoyalty()}";
         }
         return m_stats[(int)statType].ToString();
     }
@@ -144,6 +155,11 @@ public class GolemData
     public bool DoStatsRoll(GolemStatType statType)
     {
          return Random.Range(0, StatMax) < m_stats[(int)statType];
+    }
+
+    public bool DoLoyaltyRoll()
+    {
+         return Random.Range(0, GetMaxLoyalty()) >= m_loyalty;
     }
 
     public void Feed(GolemData eatThis)
@@ -167,5 +183,6 @@ public class GolemData
         m_skills.AddRange(skills.OrderBy(s => s.m_skillPriority));
 
         m_health = GetMaxHealth();
+        m_loyalty = GetMaxLoyalty();
     }
 }

@@ -3747,7 +3747,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Heal
+  m_text: Love
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -7664,15 +7664,15 @@ MonoBehaviour:
   m_minGatherable: 5
   m_maxGatherable: 10
   m_materialDatas:
+  - {fileID: 11400000, guid: da5933129f7585e4dadd1f4e2db54781, type: 2}
+  - {fileID: 11400000, guid: 6b876e80d3f27824eaa67ed4157c0cff, type: 2}
   - {fileID: 11400000, guid: 264da2bdbac34fd43be35b7d98c8c0f4, type: 2}
   - {fileID: 11400000, guid: 96b16c751662a8b4bb8f63cf50be04af, type: 2}
   - {fileID: 11400000, guid: b11716546265e1c4584628a056c498f4, type: 2}
   - {fileID: 11400000, guid: a632c83aa42ec2a408076c4565eac7e5, type: 2}
   - {fileID: 11400000, guid: 1998352e3f800ba47bb207466ec30dd0, type: 2}
-  - {fileID: 11400000, guid: da5933129f7585e4dadd1f4e2db54781, type: 2}
   - {fileID: 11400000, guid: 4f6704ddae678c84ea947d34f08812d1, type: 2}
   - {fileID: 11400000, guid: a5c2918229ef87248bfc51fd4e7cad5d, type: 2}
-  - {fileID: 11400000, guid: 6b876e80d3f27824eaa67ed4157c0cff, type: 2}
   - {fileID: 11400000, guid: 7b233c3e333502441bf307bf50035851, type: 2}
   - {fileID: 11400000, guid: 856f0b781328b1842a0d8340404b9f4f, type: 2}
   - {fileID: 11400000, guid: fa104c18a66896e4cb93c8447f6d95f5, type: 2}
