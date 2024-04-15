@@ -69,6 +69,9 @@ public class GolemBuilder
         GameManager.GetRandomSkills(m_skillChance, golemData.m_skills);
         golemData.m_skills = golemData.m_skills.OrderBy(s => s.m_skillPriority).ToList();
 
+        //random chance for affinity
+        if (Random.Range(0, 3) == 0) golemData.m_expeditionAffinity = new ExpeditionAffinity();
+
         return golemData;
     }
 
@@ -101,6 +104,7 @@ public class GolemData
     public readonly int[] m_stats = new int[(int)GolemStatType.Count];
 
     public readonly ElementTypeData m_elementType;
+    public ExpeditionAffinity m_expeditionAffinity = null;
 
     public List<BaseSkillData> m_skills = new List<BaseSkillData>();
 
@@ -132,7 +136,10 @@ public class GolemData
         return m_stats[(int)statType].ToString();
     }
 
-    public bool CanBeCrowned() => false;
+    public bool CanBeCrowned()
+    {
+        return m_stats[(int)GolemStatType.Obedience] == StatMax || m_stats[(int)GolemStatType.Intelligence] == StatMax;
+    }
 
     public bool DoStatsRoll(GolemStatType statType)
     {

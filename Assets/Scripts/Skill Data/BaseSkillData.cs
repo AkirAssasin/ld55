@@ -21,16 +21,10 @@ public abstract class BaseSkillData : ScriptableObject
 
     protected string MakeBasicLog(GolemInCombat self, GolemInCombat target)
     {
-        string targetName;
         if (m_isSingleTarget)
         {
-            targetName = target.m_golem.m_name;
+            return $"{self.m_golem.m_name} used {name} on {target.m_golem.m_name}!";
         }
-        else if (target.m_team == self.m_team)
-        {
-            targetName = "allies";
-        }
-        else targetName = "the enemy";
-        return $"{self.m_golem.m_name} used {name} on {targetName}!";
+        return $"{self.m_golem.m_name} used {name}!";
     }
 }

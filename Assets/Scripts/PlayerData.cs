@@ -23,7 +23,7 @@ public class PlayerData
     {
         if (materialID == -1)
         {
-            ++m_potionCount;
+            m_potionCount += count;
             return;
         }
         if (m_inventory.TryGetValue(materialID, out int existing)) count += existing;

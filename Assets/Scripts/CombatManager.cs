@@ -53,6 +53,8 @@ public class GolemInCombat
         }
         m_slotController.SetHealth(m_golem);
     }
+
+    public void SetSelectorActive(bool active) => m_slotController.SetSelectorActive(active);
 }
 
 public enum CombatState
@@ -66,9 +68,10 @@ public enum CombatState
 public class CombatManager : MonoBehaviour
 {
 
-    [SerializeField] GameObject m_golemSlotPrefab;
+    [SerializeField] GameObject m_golemSlotPrefab, m_skillListItemPrefab;
     [SerializeField] RectTransform[] m_teamSlotParents;
     [SerializeField] TextMeshProUGUI m_combatLogTextMesh;
+    [SerializeField] RectTransform m_skillList;
 
     public const int BaseSpeed = 100;
     public const int TimePerAction = 10000;
@@ -84,11 +87,24 @@ public class CombatManager : MonoBehaviour
     GolemInCombat m_currentTurnOwner = null;
     BaseSkillData m_currentTurnSkill = null;
     GolemInCombat m_currentTurnTarget = null;
+    bool m_allowPickTarget = false;
+
+    //skills list
+    readonly List<GolemListItemController> m_skillListItems = new List<GolemListItemController>();
 
     void Awake()
     {
         //initialize coroutine
         m_currentTurnUpdate = new Akir.Coroutine(this);
+    }
+
+    void ResetSkillList()
+    {
+        for (int X = 0; X < m_skillListItems.Count; ++X)
+        {
+            m_skillListItems[X].Pool();
+        }
+        m_skillListItems.Clear();
     }
 
     //reset combat
@@ -99,12 +115,19 @@ public class CombatManager : MonoBehaviour
             m_golemsInCombat[X].PoolSlotController();
         }
         m_golemsInCombat.Clear();
+        ResetSkillList();
+        m_currentTurnOwner = null;
         m_currentTurnUpdate.Stop();
         m_combatState = CombatState.OutOfCombat;
     }
 
     void OnGolemClicked(GolemInCombat clicked)
     {
+        if (m_allowPickTarget)
+        {
+            m_currentTurnTarget = clicked;
+            m_allowPickTarget = false;
+        }
     }
 
     public void AddGolemIntoCombat(GolemData golem, int team)
@@ -114,6 +137,7 @@ public class CombatManager : MonoBehaviour
         golemSlot.Initialize(m_teamSlotParents[team], () => OnGolemClicked(golemInCombat));
         golemSlot.SetGolemData(golem);
         m_golemsInCombat.Add(golemInCombat);
+        m_currentTurnOwner = null;
     }
 
     public void StartCombat()
@@ -137,10 +161,15 @@ public class CombatManager : MonoBehaviour
         {
             case CombatState.WaitingForNextTurn:
                 {
+                    //deselect previous
+                    m_currentTurnOwner?.SetSelectorActive(false);
+
                     //get the golem with lowest action point
                     m_currentTurnOwner = m_golemsInCombat.OrderBy(g => g.m_currentActionValue).First();
+                    m_currentTurnOwner.SetSelectorActive(true);
                     m_currentTurnSkill = null;
                     m_currentTurnTarget = null;
+                    m_allowPickTarget = false;
 
                     //fast-forward time to the start of this golem's turn
                     int advanceTime = m_currentTurnOwner.m_currentActionValue;
@@ -149,18 +178,23 @@ public class CombatManager : MonoBehaviour
                     
                     //go next state
                     m_combatState = CombatState.SelectingAction;
-                    Debug.Log($"{Time.time}: {m_currentTurnOwner.m_golem.m_name}'s turn");
+                    m_combatLogTextMesh.text = $"It's {m_currentTurnOwner.m_golem.m_name}'s turn!";
+                    m_currentTurnUpdate.Start(WaitForLeftClickCoroutine());
                     break;
                 }
             case CombatState.SelectingAction:
                 {
                     //check if obedient
-                    /*if (m_currentTurnOwner.m_golem.DoStatsRoll(GolemStatType.Obedience))
+                    if (m_currentTurnOwner.m_golem.DoStatsRoll(GolemStatType.Obedience))
                     {
                         //is obedient; wait for user action
-                        m_currentTurnUpdate.Start(WaitForUserActionCoroutine());
+                        m_combatLogTextMesh.text = $"{m_currentTurnOwner.m_golem.m_name} is awaiting your command.";
+                        m_currentTurnUpdate.Start(WaitForManuallySelectSkillCoroutine());
+                        break;
                     }
-                    else*/ if (m_currentTurnOwner.m_golem.DoStatsRoll(GolemStatType.Intelligence))
+                    
+                    //auto battle
+                    if (m_currentTurnOwner.m_golem.DoStatsRoll(GolemStatType.Intelligence))
                     {
                         //is intelligent; pick an intelligent action
                         m_currentTurnSkill = m_currentTurnOwner.ChooseIntelligentAction(m_golemsInCombat, out m_currentTurnTarget);
@@ -176,8 +210,6 @@ public class CombatManager : MonoBehaviour
                             m_currentTurnTarget = targets[Random.Range(0, targets.Length)];
                         }
                     }
-
-                    //go next state
                     m_combatState = CombatState.PerformingAction;
                     break;
                 }
@@ -195,9 +227,43 @@ public class CombatManager : MonoBehaviour
         return golems.Where(g => (g.m_team == team) ^ getNotInTeam).ToArray();
     }
 
-    IEnumerator WaitForUserActionCoroutine()
+    IEnumerator WaitForManuallySelectSkillCoroutine()
     {
-        while (true) yield return null;
+        //pick skill
+        for (int X = 0; X < m_currentTurnOwner.m_golem.m_skills.Count; ++X)
+        {
+            BaseSkillData skill = m_currentTurnOwner.m_golem.m_skills[X];
+            GolemListItemController listItem = GolemListItemController.GetFromPool(m_skillListItemPrefab);
+            m_skillListItems.Add(listItem);
+
+            Sprite icon = skill.GetIcon(out Color? iconColor);
+            listItem.Initialize(m_skillList, skill.name, null, icon, iconColor, () => ManuallySelectSkill(skill));
+        }
+        while (m_combatState == CombatState.SelectingAction) yield return null;
+    }
+
+    IEnumerator WaitForManuallySelectTargetCoroutine()
+    {
+        //pick skill
+        while (m_currentTurnTarget == null) yield return null;
+    }
+
+    void ManuallySelectSkill(BaseSkillData skill)
+    {
+        m_currentTurnSkill = skill;
+        m_currentTurnTarget = null;
+        if (m_currentTurnSkill.m_isSingleTarget)
+        {
+            //wait for picking target
+            m_combatLogTextMesh.text = $"Select a target for {m_currentTurnSkill.name}.";
+            m_allowPickTarget = true;
+            m_currentTurnUpdate.Start(WaitForManuallySelectTargetCoroutine());
+        }
+        else
+        {
+            //aight go
+            m_combatState = CombatState.PerformingAction;
+        }
     }
 
     IEnumerator WaitForLeftClickCoroutine()
@@ -211,6 +277,9 @@ public class CombatManager : MonoBehaviour
 
     IEnumerator PerformActionCoroutine()
     {
+        //reset skill list
+        ResetSkillList();
+
         //perform action
         if (m_currentTurnSkill != null)
         {

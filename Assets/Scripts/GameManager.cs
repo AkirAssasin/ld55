@@ -22,7 +22,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] int m_maxGatherable;
     [SerializeField] MaterialData[] m_materialDatas;
     [SerializeField] ElementTypeData[] m_elementTypeDatas;
-    [SerializeField] BaseSkillData[] m_guaranteedSkillDatas;
     [SerializeField] BaseSkillData[] m_skillDatas;
 
     [Header("Summoning UI")]
@@ -39,6 +38,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject m_golemInspectOK, m_golemInspectUnmake,
         m_golemInspectCrown, m_golemInspectExpedition, m_golemInspectHeal;
 
+    Button m_golemInspectCrownButton, m_golemInspectUnmakeButton,
+        m_golemInspectExpeditionButton, m_golemInspectHealButton;
+
+    TextMeshProUGUI m_golemInspectHealLabel;
+
     [Header("Golem Slots UI")]
     [SerializeField] GameObject m_golemSlotPrefab;
     [SerializeField] RectTransform m_golemSlotParent;
@@ -47,13 +51,11 @@ public class GameManager : MonoBehaviour
 
     [Header("Expedition UI")]
     [SerializeField] GameObject m_expeditionUIParent;
-    [SerializeField] TextMeshProUGUI m_expeditionResultsTextMesh, m_expeditionHealthRemainingTextMesh;
+    [SerializeField] TextMeshProUGUI m_expeditionResultsTextMesh, m_expeditionRepeatButtonTextMesh;
     [SerializeField] Button m_repeatExpeditionButton;
+    [SerializeField] Slider m_repeatExpeditionSlider;
     
-    Button m_golemInspectCrownButton, m_golemInspectUnmakeButton,
-        m_golemInspectExpeditionButton, m_golemInspectHealButton;
-
-    TextMeshProUGUI m_golemInspectHealLabel;
+    int m_repeatExpeditionCount = 1;
 
     [Header("Combat UI")]
     [SerializeField] GameObject m_combatUIParent;
@@ -87,6 +89,11 @@ public class GameManager : MonoBehaviour
         return Instance.m_materialDatas[id];
     }
 
+    public static MaterialData GetRandomMaterialData()
+    {
+        return Instance.m_materialDatas[Random.Range(0, Instance.m_materialDatas.Length)];
+    }
+
     public static int GetMaterialID(MaterialData data)
     {
         return System.Array.IndexOf(Instance.m_materialDatas, data);
@@ -99,7 +106,7 @@ public class GameManager : MonoBehaviour
 
     public static void GetRandomSkills(List<int> skillChance, List<BaseSkillData> skills)
     {
-        List<BaseSkillData> skillPool = new List<BaseSkillData>(Instance.m_guaranteedSkillDatas);
+        List<BaseSkillData> skillPool = new List<BaseSkillData>(Instance.m_skillDatas);
         for (int X = 0; X < skillChance.Count; ++X)
         {
             if (Random.Range(0, 100) >= skillChance[X])
@@ -111,9 +118,6 @@ public class GameManager : MonoBehaviour
             int skillIndex = Random.Range(0, skillPool.Count);
             skills.Add(skillPool[skillIndex]);
             skillPool.RemoveAt(skillIndex);
-            
-            //guaranteed skill taken; fill with remaining
-            if (X == 0) skillPool.AddRange(Instance.m_skillDatas);
         }
     }
 
@@ -262,7 +266,11 @@ public class GameManager : MonoBehaviour
         float value = Mathf.Max(golem.m_stats) / GolemData.StatMax;
 
         int min = (int)(m_minGatherable * value), max = (int)(m_maxGatherable * value);
-        int final = 1 + Random.Range(min, max);
+        int final = 0;
+        for (int X = 0; X < m_repeatExpeditionCount; ++X)
+        {
+            final += Mathf.Max(Random.Range(min, max), 1);
+        }
 
         m_lastExpeditionResults.Clear();
         for (int X = 0; X < final; ++X)
@@ -288,10 +296,9 @@ public class GameManager : MonoBehaviour
         }
         m_expeditionResultsTextMesh.text = resultText;
 
-        golem.m_health -= HealthPerExpedition;
+        golem.m_health -= HealthPerExpedition * m_repeatExpeditionCount;
         OnInspectedGolemHealthChanged();
         CheckCanSummon();
-        m_expeditionHealthRemainingTextMesh.text = golem.GetStatString(GolemStatType.Vitality);
 
         m_expeditionUIParent.SetActive(true);
     }
@@ -335,7 +342,7 @@ public class GameManager : MonoBehaviour
         m_inspectGolemIndex = index;
         GolemData golem = m_player.m_golems[m_inspectGolemIndex];
 
-        m_golemInspectPanel.Initialize(golem, false);
+        m_golemInspectPanel.Initialize(golem);
 
         m_golemInspectCrownButton.interactable = golem.CanBeCrowned();
 
@@ -344,6 +351,7 @@ public class GameManager : MonoBehaviour
 
         m_golemInspectUnmakeButton.interactable = (m_player.m_golems.Count >= 2);
         OnInspectedGolemHealthChanged();
+        m_repeatExpeditionSlider.value = 1;
 
         m_golemInspectUnmake.SetActive(!isNew);
         m_golemInspectExpedition.SetActive(!isNew);
@@ -403,7 +411,7 @@ public class GameManager : MonoBehaviour
 
     void CheckCanSummon()
     {
-        if (m_unmakeListItems.Count > 0)
+        if (m_feedingThisGolem != null)
         {
             m_feedPromptObject.SetActive(true);
             m_summonButton.interactable = false;
@@ -422,8 +430,17 @@ public class GameManager : MonoBehaviour
         m_golemInspectExpeditionButton.interactable = m_repeatExpeditionButton.interactable = canExpedition;
 
         m_golemSlots[m_inspectGolemIndex].SetHealth(golem);
-        m_golemInspectPanel.Initialize(golem, false);
+        m_golemInspectPanel.Initialize(golem);
         CheckCanHealInspectedGolem();
+
+        m_repeatExpeditionSlider.maxValue = Mathf.Max(1, (golem.m_health - 1) / HealthPerExpedition);
+        //OnRepeatSliderChanged(m_repeatExpeditionSlider.value);
+    }
+
+    public void OnRepeatSliderChanged(float value)
+    {
+        m_repeatExpeditionCount = Mathf.Max(1, (int)m_repeatExpeditionSlider.value);
+        m_expeditionRepeatButtonTextMesh.text = $"Repeat x{m_repeatExpeditionCount}";
     }
 
     void CheckCanHealInspectedGolem()
